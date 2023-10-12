@@ -8,10 +8,10 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatefulWidget {
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
@@ -35,10 +35,10 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  MyHomePageState createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class MyHomePageState extends State<MyHomePage> {
   static final Config configB2Ca = Config(
     tenant: 'YOUR_TENANT_NAME',
     clientId: 'YOUR_CLIENT_ID',
