@@ -12,13 +12,13 @@ var aadOauth = (function () {
   };
 
   // Initialise the myMSALObj for the given client, authority and scope
- function init(config) {
-     // TODO: Add support for other MSAL configuration
+  function init(config) {
+    // TODO: Add support for other MSAL configuration
      var authData = {
-         clientId: config.clientId,
+        clientId: config.clientId,
          authority: config.isB2C ? "https://" + config.tenant + ".b2clogin.com/tfp/" + config.tenant + ".onmicrosoft.com/" + config.policy + "/" : "https://login.microsoftonline.com/" + config.tenant,
          knownAuthorities: [ config.tenant + ".b2clogin.com", "login.microsoftonline.com"],
-         redirectUri: config.redirectUri,
+        redirectUri: config.redirectUri,
      };
      var postLogoutRedirectUri = {
          postLogoutRedirectUri: config.postLogoutRedirectUri,
@@ -29,28 +29,28 @@ var aadOauth = (function () {
          } : {
              ...authData,
              ...postLogoutRedirectUri,
-         },
-         cache: {
+      },
+      cache: {
              cacheLocation: config.cacheLocation,
-             storeAuthStateInCookie: false,
-         },
-     };
+        storeAuthStateInCookie: false,
+      },
+    };
 
-     if (typeof config.scope === "string") {
-         tokenRequest.scopes = config.scope.split(" ");
-     } else {
-         tokenRequest.scopes = config.scope;
-     }
+    if (typeof config.scope === "string") {
+      tokenRequest.scopes = config.scope.split(" ");
+    } else {
+      tokenRequest.scopes = config.scope;
+    }
 
-     tokenRequest.extraQueryParameters = JSON.parse(config.customParameters);
-     tokenRequest.prompt = config.prompt;
+    tokenRequest.extraQueryParameters = JSON.parse(config.customParameters);
+    tokenRequest.prompt = config.prompt;
 
-     myMSALObj = new msal.PublicClientApplication(msalConfig);
-     // Register Callbacks for Redirect flow and record the task so we
-     // can await its completion in the login API
+    myMSALObj = new msal.PublicClientApplication(msalConfig);
+    // Register Callbacks for Redirect flow and record the task so we
+    // can await its completion in the login API
 
-     redirectHandlerTask = myMSALObj.handleRedirectPromise();
- }
+    redirectHandlerTask = myMSALObj.handleRedirectPromise();
+  }
 
   // Tries to silently acquire a token. Will return null if a token
   // could not be acquired or if no cached account credentials exist.
@@ -87,7 +87,7 @@ var aadOauth = (function () {
   /// Setting [refreshIfAvailable] to [true] should attempt to re-authenticate
   /// with the existing refresh token, if any, even though the access token may
   /// still be valid; however MSAL doesn't support this. Therefore it will have
-  /// the same impact as when it is set to [false].
+  /// the same impact as when it is set to [false]. 
   /// [useRedirect] uses the MSAL redirection based token acquisition instead of
   /// a popup window. This is the only way that iOS based devices will acquire
   /// a token using MSAL when the application is installed to the home screen.
@@ -99,7 +99,7 @@ var aadOauth = (function () {
   /// if it has nearly expired. If this fails for any reason, it will then move on
   /// to attempt to refresh the token using an interactive login.
 
-  async function login(refreshIfAvailable, useRedirect, onSuccess, onError) {
+  async function login(refreshIfAvailable, silentLogin, useRedirect, onSuccess, onError) {
     try {
       // The redirect handler task will complete with auth results if we
       // were redirected from AAD. If not, it will complete with null
@@ -122,8 +122,8 @@ var aadOauth = (function () {
     await silentlyAcquireToken()
 
     if(authResult != null) {
-      // Skip interactive login
-      onSuccess(authResult.accessToken ?? null);
+        // Skip interactive login
+        onSuccess(authResult.accessToken ?? null);
       return
     }
 
@@ -139,6 +139,10 @@ var aadOauth = (function () {
     } else {
       // Sign in with popup
       try {
+        if (silentLogin) {
+          throw new Error('Access has expired.')
+        }
+        
         const interactiveAuthResult = await myMSALObj.loginPopup({
           scopes: tokenRequest.scopes,
           prompt: tokenRequest.prompt,
@@ -227,6 +231,10 @@ var aadOauth = (function () {
       .catch(onError);
   }
 
+  async function getToken() {
+    return await silentlyAcquireToken();
+  }
+
   async function getAccessToken() {
     var result = await silentlyAcquireToken()
     return result ? result.accessToken : null;
@@ -246,6 +254,7 @@ var aadOauth = (function () {
     login: login,
     refreshToken: refreshToken,
     logout: logout,
+    getToken: getToken,
     getIdToken: getIdToken,
     getAccessToken: getAccessToken,
     hasCachedAccountInformation: hasCachedAccountInformation,

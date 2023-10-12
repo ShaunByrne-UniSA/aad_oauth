@@ -37,9 +37,12 @@ class MobileOAuth extends CoreOAuth {
   /// both access and refresh tokens are invalid, the web gui will be used.
   @override
   Future<Either<Failure, Token>> login(
-      {bool refreshIfAvailable = false}) async {
+      {bool refreshIfAvailable = false, bool silentLogin = false}) async {
     await _removeOldTokenOnFirstLogin();
-    return await _authorization(refreshIfAvailable: refreshIfAvailable);
+    return await _authorization(
+      refreshIfAvailable: refreshIfAvailable,
+      silentLogin: silentLogin,
+    );
   }
 
   /// Tries to silently login. will try to use the existing refresh token to get
@@ -66,6 +69,10 @@ class MobileOAuth extends CoreOAuth {
     await _authStorage.saveTokenToCache(token);
     return Right(token);
   }
+
+  /// Retrieve cached OAuth Access Token.
+  @override
+  Future<Token?> getToken() async => await _authStorage.loadTokenFromCache();
 
   /// Retrieve cached OAuth Access Token.
   /// If access token is not valid it tries to refresh the token.
@@ -119,7 +126,7 @@ class MobileOAuth extends CoreOAuth {
   /// will be returned, as long as we deem it still valid. In the event that
   /// both access and refresh tokens are invalid, the web gui will be used.
   Future<Either<Failure, Token>> _authorization(
-      {bool refreshIfAvailable = false}) async {
+      {bool refreshIfAvailable = false, bool silentLogin = false}) async {
     var token = await _authStorage.loadTokenFromCache();
 
     if (!refreshIfAvailable) {
@@ -140,6 +147,13 @@ class MobileOAuth extends CoreOAuth {
     }
 
     if (!token.hasValidAccessToken()) {
+      if (silentLogin) {
+        return Left(AadOauthFailure(
+          ErrorType.accessDeniedOrAuthenticationCanceled,
+          'Access has expired.',
+        ));
+      }
+
       final result = await _performFullAuthFlow();
       Failure? failure;
       result.fold(
@@ -161,7 +175,7 @@ class MobileOAuth extends CoreOAuth {
     if (code == null) {
       return Left(AadOauthFailure(
         ErrorType.accessDeniedOrAuthenticationCanceled,
-        'Access denied or authentication canceled.',
+        'Access denied or authentication cancelled.',
       ));
     }
     return await _requestToken.requestToken(code);

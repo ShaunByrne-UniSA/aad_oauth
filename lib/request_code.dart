@@ -28,6 +28,7 @@ class RequestCode {
     final urlParams = _constructUrlParams();
     final launchUri = Uri.parse('${_authorizationRequest.url}?$urlParams');
     final controller = WebViewController();
+    await controller.enableZoom(false);
     await controller.setNavigationDelegate(_navigationDelegate);
     await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 
@@ -60,7 +61,19 @@ class RequestCode {
             },
             child: SafeArea(
               child: Stack(
-                children: [_config.loader, webView],
+                children: [
+                  _config.loader,
+                  Focus(
+                    onKey: (node, event) {
+                      // Allow webview to handle cursor keys. Without this, the
+                      // arrow keys seem to get "eaten" by Flutter and therefore
+                      // never reach the webview.
+                      // (https://github.com/flutter/flutter/issues/102505).
+                      return KeyEventResult.skipRemainingHandlers;
+                    },
+                    child: webView,
+                  ),
+                ],
               ),
             ),
           ),

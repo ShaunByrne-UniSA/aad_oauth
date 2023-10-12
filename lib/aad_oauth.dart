@@ -23,12 +23,19 @@ class AadOAuth {
   /// still be valid. If there's no refresh token the existing access token
   /// will be returned, as long as we deem it still valid. In the event that
   /// both access and refresh tokens are invalid, the web gui will be used.
-  Future<Either<Failure, Token>> login({bool refreshIfAvailable = false}) =>
-      _coreOAuth.login(refreshIfAvailable: refreshIfAvailable);
+  Future<Either<Failure, Token>> login(
+          {bool refreshIfAvailable = false, bool silentLogin = false}) =>
+      _coreOAuth.login(
+        refreshIfAvailable: refreshIfAvailable,
+        silentLogin: silentLogin,
+      );
 
   /// Tries to silently login. will try to use the existing refresh token to get
   /// a new token.
   Future<Either<Failure, Token>> refreshToken() => _coreOAuth.refreshToken();
+
+  /// Retrieve cached OAuth Token.
+  Future<Token?> getToken() async => _coreOAuth.getToken();
 
   /// Retrieve cached OAuth Access Token.
   Future<String?> getAccessToken() async => _coreOAuth.getAccessToken();

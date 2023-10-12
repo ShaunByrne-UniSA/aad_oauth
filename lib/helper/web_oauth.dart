@@ -21,6 +21,7 @@ external void jsInit(MsalConfig config);
 @JS('login')
 external void jsLogin(
   bool refreshIfAvailable,
+  bool silentLogin,
   bool useRedirect,
   void Function(dynamic) onSuccess,
   void Function(dynamic) onError,
@@ -31,6 +32,9 @@ external void jsLogout(
   void Function() onSuccess,
   void Function(dynamic) onError,
 );
+
+@JS('getToken')
+external Object jsGetToken();
 
 @JS('getAccessToken')
 external Object jsGetAccessToken();
@@ -80,6 +84,11 @@ class WebOAuth extends CoreOAuth {
   }
 
   @override
+  Future<Token?> getToken() async {
+    return promiseToFuture(jsGetToken());
+  }
+
+  @override
   Future<String?> getAccessToken() async {
     return promiseToFuture(jsGetAccessToken());
   }
@@ -95,11 +104,12 @@ class WebOAuth extends CoreOAuth {
 
   @override
   Future<Either<Failure, Token>> login(
-      {bool refreshIfAvailable = false}) async {
+      {bool refreshIfAvailable = false, bool silentLogin = false}) async {
     final completer = Completer<Either<Failure, Token>>();
 
     jsLogin(
       refreshIfAvailable,
+      silentLogin,
       config.webUseRedirect,
       allowInterop(
           (value) => completer.complete(Right(Token(accessToken: value)))),

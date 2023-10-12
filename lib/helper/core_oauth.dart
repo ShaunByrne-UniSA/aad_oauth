@@ -12,7 +12,7 @@ class CoreOAuth {
   CoreOAuth();
 
   Future<Either<Failure, Token>> login(
-          {bool refreshIfAvailable = false}) async =>
+          {bool refreshIfAvailable = false, bool silentLogin = false}) async =>
       throw UnsupportedFailure(ErrorType.unsupported, 'Unsupported login');
 
   Future<Either<Failure, Token>> refreshToken() async =>
@@ -23,6 +23,9 @@ class CoreOAuth {
       throw UnsupportedFailure(ErrorType.unsupported, 'Unsupported logout');
 
   Future<bool> get hasCachedAccountInformation async => false;
+
+  Future<Token?> getToken() async =>
+      throw UnsupportedFailure(ErrorType.unsupported, 'Unsupported Token');
 
   Future<String?> getAccessToken() async => throw UnsupportedFailure(
       ErrorType.unsupported, 'Unsupported getAccessToken');
@@ -41,7 +44,7 @@ class MockCoreOAuth extends CoreOAuth {
 
   @override
   Future<Either<Failure, Token>> login(
-          {bool refreshIfAvailable = false}) async =>
+          {bool refreshIfAvailable = false, bool silentLogin = false}) async =>
       Right(Token(accessToken: mockAccessToken));
 
   @override
@@ -49,6 +52,9 @@ class MockCoreOAuth extends CoreOAuth {
 
   @override
   Future<bool> get hasCachedAccountInformation async => true;
+
+  @override
+  Future<Token?> getToken() async => Token(accessToken: mockAccessToken);
 
   @override
   Future<String?> getAccessToken() async => mockAccessToken;
