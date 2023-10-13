@@ -50,30 +50,31 @@ class RequestCode {
     await _config.navigatorKey.currentState!.push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
+          backgroundColor: _config.backgroundColor,
           appBar: _config.appBar,
-          body: WillPopScope(
-            onWillPop: () async {
-              if (await controller.canGoBack()) {
-                await controller.goBack();
-                return false;
-              }
-              return true;
+          body: Focus(
+            onKey: (node, event) {
+              // Allow webview to handle cursor keys. Without this, the
+              // arrow keys seem to get "eaten" by Flutter and therefore
+              // never reach the webview.
+              // (https://github.com/flutter/flutter/issues/102505).
+              return KeyEventResult.skipRemainingHandlers;
             },
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  _config.loader,
-                  Focus(
-                    onKey: (node, event) {
-                      // Allow webview to handle cursor keys. Without this, the
-                      // arrow keys seem to get "eaten" by Flutter and therefore
-                      // never reach the webview.
-                      // (https://github.com/flutter/flutter/issues/102505).
-                      return KeyEventResult.skipRemainingHandlers;
-                    },
-                    child: webView,
-                  ),
-                ],
+            child: WillPopScope(
+              onWillPop: () async {
+                if (await controller.canGoBack()) {
+                  await controller.goBack();
+                  return false;
+                }
+                return true;
+              },
+              child: SafeArea(
+                child: Stack(
+                  children: [
+                    _config.loader,
+                    webView,
+                  ],
+                ),
               ),
             ),
           ),
