@@ -10,17 +10,12 @@ class RequestCode {
   final Config _config;
   final AuthorizationRequest _authorizationRequest;
   final String _redirectUriHost;
-  late NavigationDelegate _navigationDelegate;
   String? _code;
 
   RequestCode(Config config)
       : _config = config,
         _authorizationRequest = AuthorizationRequest(config),
-        _redirectUriHost = Uri.parse(config.redirectUri).host {
-    _navigationDelegate = NavigationDelegate(
-      onNavigationRequest: _onNavigationRequest,
-    );
-  }
+        _redirectUriHost = Uri.parse(config.redirectUri).host;
 
   Future<String?> requestCode() async {
     _code = null;
@@ -29,7 +24,15 @@ class RequestCode {
     final launchUri = Uri.parse('${_authorizationRequest.url}?$urlParams');
     final controller = WebViewController();
     await controller.enableZoom(false);
-    await controller.setNavigationDelegate(_navigationDelegate);
+    await controller.setNavigationDelegate(
+      NavigationDelegate(
+        onNavigationRequest: _onNavigationRequest,
+        onWebResourceError: (error) {
+          controller.loadHtmlString(
+              '<div style="background-color:#FFF;height:100%">${error.description}</div>');
+        },
+      ),
+    );
     await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
 
     await controller.setBackgroundColor(Colors.transparent);
@@ -60,13 +63,15 @@ class RequestCode {
               // (https://github.com/flutter/flutter/issues/102505).
               return KeyEventResult.skipRemainingHandlers;
             },
-            child: WillPopScope(
-              onWillPop: () async {
+            child: PopScope(
+              canPop: false,
+              onPopInvoked: (didPop) async {
+                if (didPop) return;
                 if (await controller.canGoBack()) {
                   await controller.goBack();
-                  return false;
+                  return;
                 }
-                return true;
+                _config.navigatorKey.currentState!.pop();
               },
               child: SafeArea(
                 child: Stack(
