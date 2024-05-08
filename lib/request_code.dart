@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart' as ul;
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'model/config.dart';
@@ -103,6 +104,13 @@ class RequestCode {
       if (uri.queryParameters['code'] != null && checkHost) {
         _code = uri.queryParameters['code'];
         _config.navigatorKey.currentState!.pop();
+      } else if (_config.preventUrls.any(
+          (url) => request.url.toUpperCase().contains(url.toUpperCase()))) {
+        await ul.launchUrl(
+          uri,
+          mode: ul.LaunchMode.externalApplication,
+        );
+        return NavigationDecision.prevent;
       }
     } catch (_) {}
     return NavigationDecision.navigate;

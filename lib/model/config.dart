@@ -167,6 +167,9 @@ class Config {
   /// Background color for login prompt
   Color? backgroundColor;
 
+  /// Partial URLs to redirect to external browser when clicked by the user
+  final List<String> preventUrls;
+
   /// Determine an appropriate redirect URI for AAD authentication.
   /// On web, it is the location that the application is being served from.
   /// On mobile, it is https://login.live.com/oauth20_desktop.srf
@@ -222,6 +225,7 @@ class Config {
     this.postLogoutRedirectUri,
     this.appBar,
     this.backgroundColor,
+    this.preventUrls = const [],
   })  : authorizationUrl = customAuthorizationUrl ??
             (isB2C
                 ? (customDomainUrlWithTenantId == null
